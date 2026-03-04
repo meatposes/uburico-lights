@@ -1,0 +1,17 @@
+# Kernel module build artifacts
+*.ko
+*.o
+*.mod
+*.mod.c
+*.mod.o
+*.cmd
+*.symvers
+modules.order
+Module.symvers
+
+# Userspace binaries
+cf1000-ledd
+cf1000_led_test
+
+# Misc
+.tmp_versions/
