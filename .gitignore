@@ -16,3 +16,4 @@ cf1000_led_test
 # Misc
 .tmp_versions/
 .module-common.o.cmd
+..module-common.o.cmd
