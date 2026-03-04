@@ -1,0 +1,28 @@
+[Unit]
+Description=ORICO CF1000 NAS Bay LED Daemon (uburico-lights)
+Documentation=https://github.com/your-username/uburico-lights
+After=systemd-modules-load.service udev-settle.service
+After=zfs-import.target
+Wants=zfs-import.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/cf1000-ledd
+Restart=on-failure
+RestartSec=10
+
+# Wait up to 10s for the kernel module to register sysfs nodes
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 10); do [ -e /sys/class/leds/cf1000:bay1:blue ] && exit 0; sleep 1; done; echo "cf1000 LED sysfs not found after 10s"; exit 1'
+
+TimeoutStopSec=5
+KillSignal=SIGTERM
+
+# Security hardening
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/sys/class/leds
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
