@@ -2,8 +2,8 @@
 
 **Linux LED driver and monitoring daemon for ORICO NAS hardware.**
 
-Reverse-engineered from proprietary firmware to give you full, native Linux
-control of your NAS bay LEDs — no vendor OS, no black-box services, no nonsense.
+Reverse-engineered from inside the Orico OS to give you full, native Linux
+control of your NAS bay LEDs.
 
 Currently supported hardware:
 
