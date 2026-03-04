@@ -916,7 +916,6 @@ static void main_loop(void)
         if (ms_since(&last_poll) >= g_cfg.poll_interval_s * 1000L) {
             discover_all_drives();
             refresh_zfs();
-            refresh_network();
             compute_all_states();
             ts_now(&last_poll);
         }
@@ -931,8 +930,11 @@ static void main_loop(void)
         /* --- Write bay LEDs --- */
         update_all_leds(flash_fast, flash_slow);
 
-        /* --- System LED: aggregate disk I/O --- */
+        /* --- System LED: aggregate disk I/O (sampled every tick) --- */
         refresh_system_led();
+
+        /* --- Network LED: aggregate traffic (sampled every tick) --- */
+        refresh_network();
 
         /* --- Sleep one tick --- */
         struct timespec ts = { 0, TICK_MS * 1000000L };
