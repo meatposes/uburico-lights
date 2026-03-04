@@ -1,0 +1,2 @@
+# Kbuild — CF56Pro kernel module
+obj-m := orico_cf56pro_leds.o

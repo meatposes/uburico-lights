@@ -1,0 +1,2 @@
+# Kbuild — CF1000 kernel module
+obj-m := orico_cf1000_leds.o
