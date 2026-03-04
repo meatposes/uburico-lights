@@ -199,11 +199,10 @@ Raise net_threshold in /etc/cf1000-led.conf. Default is 64 bytes/tick.
 ## Contributing
 
 Other ORICO NAS units using Intel PCH GPIO for LEDs should be supportable
-with a new hardware directory (e.g. cf2000/) following the same structure.
-You will need the PADCFG0 register map for your unit — this can be extracted
+with the PADCFG0 register map for your unit — this can be extracted
 from the OEM firmware board config file.
 
-Pull requests welcome.
+Your contribution may help another!
 
 ---
 
