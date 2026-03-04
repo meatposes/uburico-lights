@@ -86,9 +86,6 @@ This project replaces that entirely:
 | Distro | Command |
 |--------|---------|
 | Ubuntu / Debian | sudo apt install linux-headers-$(uname -r) |
-| Fedora / RHEL | sudo dnf install kernel-devel-$(uname -r) |
-| openSUSE | sudo zypper install kernel-devel |
-| Arch Linux | sudo pacman -S linux-headers |
 
 ---
 
