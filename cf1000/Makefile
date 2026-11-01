@@ -9,7 +9,9 @@
 #   make load         insmod the freshly built module
 #   make unload       rmmod the module
 #   make status       show module state, LED sysfs nodes, daemon state
-#   make install      install module + daemon + config + systemd unit
+#   make install      install module (via DKMS when available) + daemon +
+#                     config + systemd unit
+#   make dkms-install register/rebuild the module with DKMS only
 #   make uninstall    remove installed files (leaves /etc/cf1000-led.conf)
 #   make enable       systemd enable + start
 #   make disable      systemd stop + disable
@@ -35,11 +37,15 @@ INSTALL_SBIN    := /usr/local/sbin
 INSTALL_SHARE   := /usr/share/cf1000-led
 INSTALL_MODULES := /lib/modules/$(KVER)/extra
 INSTALL_SYSTEMD := /etc/systemd/system
+DKMS_NAME       := orico-cf1000-leds
+DKMS_VERSION    := $(shell sed -n 's/^PACKAGE_VERSION="\(.*\)"/\1/p' dkms.conf)
+DKMS_SRC        := /usr/src/$(DKMS_NAME)-$(DKMS_VERSION)
 INSTALL_CONFIG  := /etc/cf1000-led.conf
 
 .PHONY: all module daemon test-tool clean \
         load unload status \
-        install uninstall enable disable restart logs
+        install module-install dkms-install \
+        uninstall enable disable restart logs
 
 all: module daemon test-tool
 
@@ -80,13 +86,17 @@ status:
 	@echo "=== dmesg (last 15 lines) ==="
 	@dmesg | tail -15
 
-install: module daemon
-	@echo "--- Installing kernel module ---"
-	sudo mkdir -p $(INSTALL_MODULES)
-	sudo install -m 644 $(MODULE).ko $(INSTALL_MODULES)/$(MODULE).ko
-	sudo depmod -a $(KVER)
-	@echo "--- Loading kernel module ---"
-	-sudo modprobe $(MODULE)
+# Without DKMS the module is built for one kernel only and vanishes on the
+# next kernel upgrade; the daemon then fails with "LED sysfs not found".
+install: daemon
+	@if command -v dkms >/dev/null 2>&1; then \
+	    $(MAKE) dkms-install; \
+	else \
+	    echo "WARNING: dkms not found, installing $(MODULE) for $(KVER) only."; \
+	    echo "         It will be missing after the next kernel upgrade."; \
+	    echo "         Install dkms (e.g. sudo apt install dkms) and re-run."; \
+	    $(MAKE) module-install; \
+	fi
 
 	@echo "--- Installing daemon ---"
 	sudo install -D -m 755 $(DAEMON_BIN) $(INSTALL_SBIN)/$(DAEMON_BIN)
@@ -116,12 +126,36 @@ install: module daemon
 	@echo "Enable and start daemon:"
 	@echo "  make enable"
 
+module-install: module
+	@echo "--- Installing kernel module for $(KVER) ---"
+	sudo mkdir -p $(INSTALL_MODULES)
+	sudo install -m 644 $(MODULE).ko $(INSTALL_MODULES)/$(MODULE).ko
+	sudo depmod -a $(KVER)
+	@echo "--- Loading kernel module ---"
+	-sudo modprobe $(MODULE)
+
+dkms-install:
+	@test -n "$(DKMS_VERSION)" || { echo "cannot read PACKAGE_VERSION from dkms.conf"; exit 1; }
+	@echo "--- Installing kernel module via DKMS ($(DKMS_NAME)/$(DKMS_VERSION)) ---"
+	-sudo dkms remove $(DKMS_NAME)/$(DKMS_VERSION) --all 2>/dev/null
+	sudo rm -rf $(DKMS_SRC)
+	sudo install -d $(DKMS_SRC)
+	sudo install -m 644 Kbuild $(MODULE).c dkms.conf $(DKMS_SRC)/
+	sudo dkms add $(DKMS_NAME)/$(DKMS_VERSION)
+	@# Drop a copy left by an older non-DKMS install for this kernel.
+	sudo rm -f $(INSTALL_MODULES)/$(MODULE).ko
+	sudo dkms install $(DKMS_NAME)/$(DKMS_VERSION) -k $(KVER)
+	@echo "--- Loading kernel module ---"
+	-sudo modprobe $(MODULE)
+
 uninstall:
 	-sudo systemctl stop    cf1000-ledd 2>/dev/null
 	-sudo systemctl disable cf1000-ledd 2>/dev/null
 	sudo rm -f $(INSTALL_SYSTEMD)/cf1000-ledd.service
 	sudo systemctl daemon-reload
 	sudo rm -f $(INSTALL_SBIN)/$(DAEMON_BIN)
+	-sudo dkms remove $(DKMS_NAME)/$(DKMS_VERSION) --all 2>/dev/null
+	sudo rm -rf $(DKMS_SRC)
 	sudo rm -f $(INSTALL_MODULES)/$(MODULE).ko
 	sudo depmod -a $(KVER)
 	sudo rm -rf $(INSTALL_SHARE)

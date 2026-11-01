@@ -2,6 +2,19 @@
 
 All notable changes to uburico-lights will be documented here.
 
+## [Unreleased]
+
+### Fixed
+- The kernel module no longer disappears after a kernel upgrade. `make install`
+  now registers it with DKMS (`dkms.conf` per board), so it is rebuilt for each
+  new kernel. Without DKMS it falls back to the old one-kernel install and warns.
+- The daemon unit runs `modprobe` before waiting for the LED sysfs nodes, and
+  stops after 5 failed starts in 5 minutes instead of restarting every 10 s
+  forever. The failure message now points at `dkms status`.
+- Top-level `make install`, `make enable`, `make install-cf56pro` and
+  `make enable-cf56pro` now exist, as the README describes.
+- Unit `Documentation=` points at the real repository.
+
 ## [1.0.0] - 2026-03-04
 
 Initial public release. Supports ORICO CF1000 (Minisforum N5A, Intel Alder Lake-N).
