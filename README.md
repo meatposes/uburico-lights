@@ -78,6 +78,7 @@ This project replaces that entirely:
 | ---------------------------------------------- | ---------------------------------------- |
 | Linux kernel headers (matching running kernel) | Build the kernel module                  |
 | gcc, make                                      | Build everything                         |
+| dkms                                           | Rebuild the module on kernel upgrades    |
 | zfsutils-linux                                 | ZFS pool membership detection (optional) |
 | smartmontools                                  | SMART health monitoring (optional)       |
 
@@ -85,7 +86,13 @@ This project replaces that entirely:
 
 | Distro          | Command                                    |
 | --------------- | ------------------------------------------ |
-| Ubuntu / Debian | sudo apt install linux-headers-$(uname -r) |
+| Ubuntu / Debian | sudo apt install linux-headers-$(uname -r) dkms |
+
+`make install` registers the kernel module with DKMS when `dkms` is installed,
+so it is rebuilt automatically for every new kernel. Without DKMS the module is
+installed for the running kernel only and disappears after the next kernel
+upgrade (the daemon then logs `LED sysfs not found after 10s`). To move an
+existing install to DKMS, install `dkms` and run `sudo make install` again.
 
 ---
 
